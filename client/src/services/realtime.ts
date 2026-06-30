@@ -1,12 +1,24 @@
 import { Realtime, type InboundMessage } from 'ably';
 import type { RoomData } from '../types';
 
-const ably = new Realtime({
-  key: import.meta.env.VITE_ABLY_KEY,
-  clientId: localStorage.getItem('userId') || undefined,
-});
-
 const API_URL = import.meta.env.VITE_API_URL || '';
+
+let ably: Realtime | null = null;
+
+function getAbly(): Realtime {
+  if (!ably) {
+    let userId = localStorage.getItem('userId');
+    if (!userId) {
+      userId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('userId', userId);
+    }
+    ably = new Realtime({
+      key: import.meta.env.VITE_ABLY_KEY,
+      clientId: userId,
+    });
+  }
+  return ably;
+}
 
 export async function createRoom(
   name: string,
@@ -67,7 +79,8 @@ export function subscribeToRoom(
   roomId: string,
   onUpdate: (room: RoomData) => void,
 ): () => void {
-  const channel = ably.channels.get(`room:${roomId}`);
+  const client = getAbly();
+  const channel = client.channels.get(`room:${roomId}`);
 
   channel.subscribe('room_update', (msg: InboundMessage) => {
     onUpdate(msg.data as RoomData);
