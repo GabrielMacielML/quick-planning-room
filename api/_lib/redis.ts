@@ -1,4 +1,4 @@
-import { Redis } from '@upstash/redis/dist/edge';
+import { Redis } from '@upstash/redis';
 
 const hasUpstash = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
 
