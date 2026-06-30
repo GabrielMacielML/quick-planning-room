@@ -7,6 +7,8 @@ import PokerTable from '../components/PokerTable';
 import RoomControls from '../components/RoomControls';
 import VotingDeck from '../components/VotingDeck';
 
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 export default function Room() {
   const { id: roomId } = useParams();
   const location = useLocation();
@@ -99,12 +101,19 @@ export default function Room() {
 
     let cleanupFn: (() => void) | null = null;
 
+    const handleBeforeUnload = () => {
+      navigator.sendBeacon(`${API_URL}/api/rooms`, JSON.stringify({ action: 'leave', roomId, userId }));
+    };
+
     join();
     subscribeToRoom(roomId, handleRoomUpdate).then((unsub) => {
       cleanupFn = unsub;
     });
 
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       cleanupFn?.();
       leaveRoom(roomId, userId);
     };
