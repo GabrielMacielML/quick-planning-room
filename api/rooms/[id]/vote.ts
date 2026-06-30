@@ -14,19 +14,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Missing roomId or userId' });
   }
 
-  const room = await getRoom(id as string);
-  if (!room) {
-    return res.status(404).json({ error: 'Room not found' });
+  try {
+    const room = await getRoom(id as string);
+    if (!room) {
+      return res.status(404).json({ error: 'Room not found' });
+    }
+
+    const player = room.players.find((p: any) => p.userId === userId);
+    if (!player) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    player.vote = value;
+    await saveRoom(room);
+    await publishRoomUpdate(id as string, room);
+
+    return res.status(200).json({ room });
+  } catch (e) {
+    console.error('Vote error:', e);
+    return res.status(500).json({ error: 'Internal server error' });
   }
-
-  const player = room.players.find((p: any) => p.userId === userId);
-  if (!player) {
-    return res.status(404).json({ error: 'Player not found' });
-  }
-
-  player.vote = value;
-  await saveRoom(room);
-  await publishRoomUpdate(id as string, room);
-
-  return res.status(200).json({ room });
 }

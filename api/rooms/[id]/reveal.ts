@@ -13,14 +13,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Missing roomId' });
   }
 
-  const room = await getRoom(id as string);
-  if (!room) {
-    return res.status(404).json({ error: 'Room not found' });
+  try {
+    const room = await getRoom(id as string);
+    if (!room) {
+      return res.status(404).json({ error: 'Room not found' });
+    }
+
+    room.areCardsRevealed = true;
+    await saveRoom(room);
+    await publishRoomUpdate(id as string, room);
+
+    return res.status(200).json({ room });
+  } catch (e) {
+    console.error('Reveal error:', e);
+    return res.status(500).json({ error: 'Internal server error' });
   }
-
-  room.areCardsRevealed = true;
-  await saveRoom(room);
-  await publishRoomUpdate(id as string, room);
-
-  return res.status(200).json({ room });
 }
