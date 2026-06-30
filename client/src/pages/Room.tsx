@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { joinRoom, createRoom, vote, revealCards, resetVotes, subscribeToRoom, leaveRoom } from '../services/realtime';
 import type { RoomData } from '../types';
 import RoomHeader from '../components/RoomHeader';
@@ -10,7 +10,6 @@ import VotingDeck from '../components/VotingDeck';
 export default function Room() {
   const { id: roomId } = useParams();
   const location = useLocation();
-  const navigate = useNavigate();
   const [name, setName] = useState(() => {
     return location.state?.name || localStorage.getItem(`room_${roomId}_name`) || '';
   });

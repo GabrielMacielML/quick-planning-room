@@ -1,7 +1,7 @@
-import Realtime from 'ably/promises';
+import { Realtime, type InboundMessage } from 'ably';
 import type { RoomData } from '../types';
 
-const ably = new Realtime.Promise({
+const ably = new Realtime({
   key: import.meta.env.VITE_ABLY_KEY,
   clientId: localStorage.getItem('userId') || undefined,
 });
@@ -69,7 +69,7 @@ export function subscribeToRoom(
 ): () => void {
   const channel = ably.channels.get(`room:${roomId}`);
 
-  channel.subscribe('room_update', (msg) => {
+  channel.subscribe('room_update', (msg: InboundMessage) => {
     onUpdate(msg.data as RoomData);
   });
 
