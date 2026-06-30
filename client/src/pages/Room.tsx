@@ -97,11 +97,15 @@ export default function Room() {
       }
     };
 
+    let cleanupFn: (() => void) | null = null;
+
     join();
-    const unsubscribe = subscribeToRoom(roomId, handleRoomUpdate);
+    subscribeToRoom(roomId, handleRoomUpdate).then((unsub) => {
+      cleanupFn = unsub;
+    });
 
     return () => {
-      unsubscribe();
+      cleanupFn?.();
       leaveRoom(roomId, userId);
     };
   }, [name, roomId, hasJoined, userId]);

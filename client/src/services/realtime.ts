@@ -1,23 +1,26 @@
-import { Realtime, type InboundMessage } from 'ably';
 import type { RoomData } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
-let ably: Realtime | null = null;
+// Ably só é carregado se a chave existir
+let ablyPromise: Promise<any> | null = null;
 
-function getAbly(): Realtime {
-  if (!ably) {
-    let userId = localStorage.getItem('userId');
-    if (!userId) {
-      userId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      localStorage.setItem('userId', userId);
-    }
-    ably = new Realtime({
-      key: import.meta.env.VITE_ABLY_KEY,
-      clientId: userId,
+function getAbly() {
+  if (!import.meta.env.VITE_ABLY_KEY) return null;
+  if (!ablyPromise) {
+    ablyPromise = import('ably').then(({ Realtime }) => {
+      let userId = localStorage.getItem('userId');
+      if (!userId) {
+        userId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('userId', userId);
+      }
+      return new Realtime({
+        key: import.meta.env.VITE_ABLY_KEY,
+        clientId: userId,
+      });
     });
   }
-  return ably;
+  return ablyPromise;
 }
 
 export async function createRoom(
@@ -75,14 +78,15 @@ export async function resetVotes(roomId: string): Promise<void> {
   });
 }
 
-export function subscribeToRoom(
+export async function subscribeToRoom(
   roomId: string,
   onUpdate: (room: RoomData) => void,
-): () => void {
-  const client = getAbly();
-  const channel = client.channels.get(`room:${roomId}`);
+): Promise<() => void> {
+  const client = await getAbly();
+  if (!client) return () => {};
 
-  channel.subscribe('room_update', (msg: InboundMessage) => {
+  const channel = client.channels.get(`room:${roomId}`);
+  channel.subscribe('room_update', (msg: any) => {
     onUpdate(msg.data as RoomData);
   });
 
