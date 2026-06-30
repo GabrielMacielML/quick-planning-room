@@ -23,7 +23,8 @@ export default async function handler(req: Request): Promise<Response> {
 
   try {
     const url = new URL(req.url);
-    const id = url.pathname.split('/').filter(Boolean).pop();
+    const segments = url.pathname.split('/').filter(Boolean);
+    const id = segments[segments.length - 2];
     const { userId, value } = await req.json();
 
     if (!id || !userId) {

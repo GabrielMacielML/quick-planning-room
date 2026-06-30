@@ -23,7 +23,8 @@ export default async function handler(req: Request): Promise<Response> {
 
   try {
     const url = new URL(req.url);
-    const id = url.pathname.split('/').filter(Boolean).pop();
+    const segments = url.pathname.split('/').filter(Boolean);
+    const id = segments[segments.length - 2];
 
     if (!id) {
       return new Response(JSON.stringify({ error: 'Missing roomId' }), {
