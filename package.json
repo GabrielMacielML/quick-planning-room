@@ -1,0 +1,11 @@
+{
+  "name": "quick-planning-room",
+  "version": "2.0.0",
+  "scripts": {
+    "dev": "cd client && npm run dev",
+    "build": "cd client && npm install && npm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
