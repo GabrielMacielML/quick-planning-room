@@ -3,6 +3,11 @@
   "outputDirectory": "client/dist",
   "installCommand": "npm install && cd client && npm install",
   "framework": null,
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/edge"
+    }
+  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/((?!assets/|api/).*)", "destination": "/index.html" }

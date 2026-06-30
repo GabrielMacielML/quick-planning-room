@@ -1,20 +1,22 @@
-import Ably from 'ably';
-
-let client: Ably.Rest | null = null;
-if (process.env.ABLY_API_KEY) {
-  try {
-    client = new Ably.Rest(process.env.ABLY_API_KEY);
-  } catch (e) {
-    console.error('Failed to init Ably:', e);
-  }
-}
+const ABLY_KEY = process.env.ABLY_API_KEY;
 
 export async function publishRoomUpdate(roomId: string, room: any) {
-  if (!client) return;
+  if (!ABLY_KEY) return;
   try {
-    const channel = client.channels.get(`room:${roomId}`);
-    await channel.publish('room_update', room);
+    const channelName = `room:${roomId}`;
+    const url = `https://rest.ably.io/channels/${encodeURIComponent(channelName)}/messages`;
+    await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${btoa(ABLY_KEY)}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: 'room_update',
+        data: room,
+      }),
+    });
   } catch (e) {
-    console.error('Failed to publish Ably update:', e);
+    console.error('Ably publish error:', e);
   }
 }

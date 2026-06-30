@@ -1,4 +1,4 @@
-import { Redis } from '@upstash/redis';
+import { Redis } from '@upstash/redis/dist/edge';
 
 const hasUpstash = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
 
@@ -10,7 +10,6 @@ if (hasUpstash) {
   });
 }
 
-// In-memory fallback (não persiste entre cold starts do serverless)
 const localRooms: Record<string, any> = {};
 
 export async function getRoom(roomId: string) {

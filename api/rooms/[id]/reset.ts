@@ -1,32 +1,59 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getRoom, saveRoom } from '../../_lib/redis';
 import { publishRoomUpdate } from '../../_lib/ably';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+export const config = { runtime: 'edge' };
+
+export default async function handler(req: Request): Promise<Response> {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
-  const { id } = req.query;
-
-  if (!id) {
-    return res.status(400).json({ error: 'Missing roomId' });
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   try {
-    const room = await getRoom(id as string);
+    const url = new URL(req.url);
+    const id = url.pathname.split('/').filter(Boolean).pop();
+
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'Missing roomId' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const room = await getRoom(id);
     if (!room) {
-      return res.status(404).json({ error: 'Room not found' });
+      return new Response(JSON.stringify({ error: 'Room not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     room.areCardsRevealed = false;
     room.players.forEach((p: any) => (p.vote = null));
     await saveRoom(room);
-    await publishRoomUpdate(id as string, room);
+    await publishRoomUpdate(id, room);
 
-    return res.status(200).json({ room });
+    return new Response(JSON.stringify({ room }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (e) {
     console.error('Reset error:', e);
-    return res.status(500).json({ error: 'Internal server error' });
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 }
